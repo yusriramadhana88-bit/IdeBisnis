@@ -34,6 +34,16 @@ def init_db():
             updated_at      TEXT DEFAULT (datetime('now','localtime'))
         );
 
+        CREATE TABLE IF NOT EXISTS savings_targets (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id     TEXT NOT NULL,
+            category    TEXT NOT NULL,
+            target_amount REAL NOT NULL,
+            month       TEXT NOT NULL,
+            created_at  TEXT DEFAULT (datetime('now','localtime')),
+            UNIQUE(user_id, category, month)
+        );
+
         CREATE TABLE IF NOT EXISTS zakat_assets (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     TEXT NOT NULL,
