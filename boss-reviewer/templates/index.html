@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boss Reviewer — Typo Checker Bahasa Indonesia</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f5; color: #333; }
+
+        .header {
+            background: #1a1a2e; color: white; padding: 20px 40px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header h1 { font-size: 24px; font-weight: 700; }
+        .header h1 span { color: #e94560; }
+        .header .tagline { font-size: 13px; color: #aaa; }
+
+        .upload-area {
+            max-width: 600px; margin: 40px auto; background: white;
+            border: 2px dashed #ccc; border-radius: 12px; padding: 40px;
+            text-align: center; cursor: pointer; transition: border-color 0.2s;
+        }
+        .upload-area:hover { border-color: #e94560; }
+        .upload-area.dragover { border-color: #e94560; background: #fff5f7; }
+        .upload-area h2 { margin-bottom: 8px; }
+        .upload-area p { color: #888; font-size: 14px; }
+        .upload-area input { display: none; }
+
+        .btn {
+            display: inline-block; padding: 10px 24px; border: none; border-radius: 6px;
+            font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px;
+        }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-primary:hover { background: #d63851; }
+        .btn-outline { background: white; color: #e94560; border: 2px solid #e94560; }
+
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #eee;
+            border-top-color: #e94560; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-container {
+            display: none; max-width: 1200px; margin: 20px auto;
+            grid-template-columns: 1fr 350px; gap: 20px; padding: 0 20px;
+        }
+        .result-container.active { display: grid; }
+
+        .document-panel {
+            background: white; border-radius: 8px; padding: 32px 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); line-height: 1.8;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .document-panel p { margin-bottom: 12px; position: relative; }
+
+        .typo-highlight {
+            background: #fff3cd; border-bottom: 2px solid #e94560;
+            cursor: pointer; position: relative; padding: 1px 2px; border-radius: 2px;
+        }
+        .typo-highlight:hover { background: #ffe0b2; }
+        .typo-highlight.premium-fixed {
+            background: #d4edda; border-bottom-color: #28a745;
+        }
+
+        .comments-panel {
+            max-height: 80vh; overflow-y: auto;
+        }
+        .comments-panel h3 {
+            font-size: 14px; color: #666; margin-bottom: 12px;
+            padding-bottom: 8px; border-bottom: 1px solid #eee;
+        }
+        .comment-card {
+            background: white; border-radius: 8px; padding: 14px 16px;
+            margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 3px solid #e94560; font-size: 13px; cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        .comment-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .comment-card.premium-fixed { border-left-color: #28a745; }
+        .comment-card .typo-word { color: #e94560; font-weight: 600; }
+        .comment-card .suggestion { color: #28a745; font-weight: 600; }
+        .comment-card .context { color: #888; font-size: 12px; margin-top: 4px; }
+        .comment-card .badge {
+            display: inline-block; font-size: 10px; padding: 2px 6px;
+            border-radius: 3px; font-weight: 600; margin-bottom: 4px;
+        }
+        .badge-typo { background: #fff3cd; color: #856404; }
+        .badge-fixed { background: #d4edda; color: #155724; }
+
+        .upsell-card {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white; border-radius: 8px; padding: 20px;
+            margin-top: 12px; text-align: center;
+        }
+        .upsell-card h4 { margin-bottom: 8px; }
+        .upsell-card p { font-size: 13px; color: #ccc; margin-bottom: 12px; }
+        .upsell-card .btn { margin-top: 0; }
+
+        .stats-bar {
+            display: none; max-width: 1200px; margin: 20px auto 0;
+            padding: 16px 40px; background: white; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stats-bar.active { display: flex; gap: 32px; align-items: center; }
+        .stat { text-align: center; }
+        .stat .num { font-size: 28px; font-weight: 700; color: #e94560; }
+        .stat .label { font-size: 12px; color: #888; }
+
+        .tier-toggle {
+            display: flex; gap: 8px; margin-top: 16px; justify-content: center;
+        }
+        .tier-btn {
+            padding: 8px 20px; border-radius: 20px; border: 2px solid #ddd;
+            background: white; cursor: pointer; font-size: 13px; font-weight: 600;
+        }
+        .tier-btn.active { border-color: #e94560; color: #e94560; }
+        .tier-btn.premium { border-color: #ffd700; color: #856404; background: #fffde7; }
+
+        .new-review-btn {
+            display: none; text-align: center; margin: 20px auto;
+        }
+        .new-review-btn.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Boss <span>Reviewer</span></h1>
+            <div class="tagline">Typo checker untuk dokumen Bahasa Indonesia</div>
+        </div>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+        <h2>Upload Dokumen</h2>
+        <p>Drag & drop file .docx di sini, atau klik untuk pilih file</p>
+        <input type="file" id="fileInput" accept=".docx">
+        <div class="tier-toggle">
+            <button class="tier-btn active" data-tier="free" onclick="setTier('free')">Gratis (5 typo)</button>
+            <button class="tier-btn premium" data-tier="premium" onclick="setTier('premium')">Premium ★</button>
+        </div>
+        <br>
+        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Pilih File</button>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Sedang mereview dokumen...</p>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="label">Typo Ditemukan</div></div>
+        <div class="stat"><div class="num" id="statShown">0</div><div class="label">Ditampilkan</div></div>
+        <div class="stat"><div class="num" id="statParas">0</div><div class="label">Paragraf</div></div>
+    </div>
+
+    <div class="result-container" id="resultContainer">
+        <div class="document-panel" id="documentPanel"></div>
+        <div class="comments-panel" id="commentsPanel">
+            <h3>💬 Comments</h3>
+        </div>
+    </div>
+
+    <div class="new-review-btn" id="newReviewBtn">
+        <button class="btn btn-outline" onclick="resetReview()">Review Dokumen Lain</button>
+    </div>
+
+<script>
+let currentTier = 'free';
+
+function setTier(tier) {
+    currentTier = tier;
+    document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-tier="${tier}"]`).classList.add('active');
+}
+
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+function handleFile(file) {
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('premium', currentTier === 'premium' ? '1' : '0');
+
+    uploadArea.style.display = 'none';
+    document.getElementById('loading').classList.add('active');
+
+    fetch('/upload', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('loading').classList.remove('active');
+            if (data.error) { alert(data.error); resetReview(); return; }
+            renderResult(data);
+        })
+        .catch(() => { alert('Gagal memproses dokumen'); resetReview(); });
+}
+
+function renderResult(data) {
+    const docPanel = document.getElementById('documentPanel');
+    const commPanel = document.getElementById('commentsPanel');
+    const isPremium = data.is_premium;
+
+    // Build paragraph HTML with highlights
+    let html = '';
+    for (const para of data.paragraphs) {
+        let text = escapeHtml(para.text);
+        for (const typo of data.typos) {
+            if (typo.paragraph === para.index) {
+                const word = escapeHtml(typo.word);
+                const cls = isPremium ? 'typo-highlight premium-fixed' : 'typo-highlight';
+                const display = isPremium ? escapeHtml(typo.suggestion) : word;
+                text = text.replace(
+                    new RegExp(`\\b${escapeRegex(typo.word)}\\b`, 'i'),
+                    `<span class="${cls}" data-typo-id="${typo.paragraph}-${typo.word}">${display}</span>`
+                );
+            }
+        }
+        html += `<p>${text}</p>`;
+    }
+    docPanel.innerHTML = html;
+
+    // Build comments
+    let commHtml = '<h3>💬 Comments</h3>';
+    for (const typo of data.typos) {
+        if (isPremium) {
+            commHtml += `
+                <div class="comment-card premium-fixed" data-typo-id="${typo.paragraph}-${typo.word}">
+                    <div class="badge badge-fixed">✅ Diperbaiki</div><br>
+                    "<span class="suggestion">${escapeHtml(typo.suggestion)}</span>"
+                    ← sebelumnya "<span class="typo-word">${escapeHtml(typo.word)}</span>"
+                    <div class="context">${escapeHtml(typo.context || '')}</div>
+                </div>`;
+        } else {
+            commHtml += `
+                <div class="comment-card" data-typo-id="${typo.paragraph}-${typo.word}">
+                    <div class="badge badge-typo">Typo</div><br>
+                    "<span class="typo-word">${escapeHtml(typo.word)}</span>"
+                    → seharusnya "<span class="suggestion">${escapeHtml(typo.suggestion)}</span>"
+                    <div class="context">${escapeHtml(typo.context || '')}</div>
+                </div>`;
+        }
+    }
+
+    if (data.is_limited) {
+        commHtml += `
+            <div class="upsell-card">
+                <h4>🔒 ${data.total_found - data.typos.length} typo lainnya tersembunyi</h4>
+                <p>Upgrade ke Premium untuk melihat semua typo + auto-fix langsung di dokumen</p>
+                <button class="btn btn-primary" onclick="alert('Coming soon!')">Upgrade Premium</button>
+            </div>`;
+    }
+
+    commPanel.innerHTML = commHtml;
+
+    // Hover sync between comments and highlights
+    document.querySelectorAll('.comment-card[data-typo-id]').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            const id = card.dataset.typoId;
+            document.querySelector(`.typo-highlight[data-typo-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.querySelector(`.typo-highlight[data-typo-id="${id}"]`)?.style.setProperty('outline', '2px solid #e94560');
+        });
+        card.addEventListener('mouseleave', () => {
+            document.querySelectorAll('.typo-highlight').forEach(h => h.style.removeProperty('outline'));
+        });
+    });
+
+    // Stats
+    document.getElementById('statTotal').textContent = data.total_found;
+    document.getElementById('statShown').textContent = data.typos.length;
+    document.getElementById('statParas').textContent = data.paragraphs.length;
+
+    document.getElementById('statsBar').classList.add('active');
+    document.getElementById('resultContainer').classList.add('active');
+    document.getElementById('newReviewBtn').classList.add('active');
+}
+
+function resetReview() {
+    uploadArea.style.display = '';
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('statsBar').classList.remove('active');
+    document.getElementById('resultContainer').classList.remove('active');
+    document.getElementById('newReviewBtn').classList.remove('active');
+    fileInput.value = '';
+}
+
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+</script>
+</body>
+</html>
