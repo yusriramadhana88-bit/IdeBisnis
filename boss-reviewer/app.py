@@ -7,7 +7,7 @@ from pathlib import Path
 from flask import Flask, request, render_template, jsonify
 from dotenv import load_dotenv
 from docx_parser import extract_paragraphs_from_docx
-from reviewer import check_typos
+from reviewer import check_typos, check_diksi, check_koherensi
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -17,7 +17,7 @@ app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB
 
 ALLOWED_FREE = {".docx"}
 ALLOWED_PREMIUM = {".docx", ".pdf"}
-FREE_TYPO_LIMIT = 5
+FREE_LIMIT = 5
 
 
 @app.route("/")
@@ -34,9 +34,18 @@ def upload():
     ext = Path(file.filename).suffix.lower()
     is_premium = request.form.get("premium") == "1"
 
+    features = {
+        "typo": request.form.get("feat_typo") == "1",
+        "diksi": request.form.get("feat_diksi") == "1",
+        "koherensi": request.form.get("feat_koherensi") == "1",
+    }
+    if not any(features.values()):
+        features["typo"] = True
+
     allowed = ALLOWED_PREMIUM if is_premium else ALLOWED_FREE
     if ext not in allowed:
-        return jsonify({"error": f"Format {ext} tidak didukung. Upload file .docx"}), 400
+        msg = "Format .pdf hanya untuk Premium." if ext == ".pdf" else f"Format {ext} tidak didukung."
+        return jsonify({"error": msg}), 400
 
     filename = f"{uuid.uuid4().hex}{ext}"
     filepath = app.config["UPLOAD_FOLDER"] / filename
@@ -44,18 +53,26 @@ def upload():
 
     try:
         paragraphs = extract_paragraphs_from_docx(filepath)
-        typos = check_typos(paragraphs)
+        all_findings = []
 
-        is_limited = not is_premium and len(typos) > FREE_TYPO_LIMIT
-        visible_typos = typos[:FREE_TYPO_LIMIT] if not is_premium else typos
-        total_found = len(typos)
+        if features["typo"]:
+            all_findings.extend(check_typos(paragraphs))
+        if features["diksi"]:
+            all_findings.extend(check_diksi(paragraphs))
+        if features["koherensi"]:
+            all_findings.extend(check_koherensi(paragraphs))
+
+        total_found = len(all_findings)
+        is_limited = not is_premium and total_found > FREE_LIMIT
+        visible = all_findings[:FREE_LIMIT] if not is_premium else all_findings
 
         return jsonify({
             "paragraphs": paragraphs,
-            "typos": visible_typos,
+            "findings": visible,
             "total_found": total_found,
             "is_limited": is_limited,
             "is_premium": is_premium,
+            "features": features,
         })
     finally:
         filepath.unlink(missing_ok=True)
