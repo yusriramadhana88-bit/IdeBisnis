@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desa Berat Wetan — Kecamatan Kalidawir, Kabupaten Tulungagung</title>
+    <style>
+        :root {
+            --primary: #1B5E20;
+            --primary-light: #4CAF50;
+            --primary-dark: #0D3B0F;
+            --accent: #FF8F00;
+            --bg: #FAFAFA;
+            --card: #FFFFFF;
+            --text: #212121;
+            --text-light: #757575;
+            --border: #E0E0E0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+        /* ── Top Bar ── */
+        .top-bar {
+            background: var(--primary-dark); color: white; font-size: 12px;
+            padding: 6px 0; text-align: center;
+        }
+        .top-bar a { color: #A5D6A7; text-decoration: none; margin: 0 12px; }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white; padding: 0;
+        }
+        .header-inner {
+            max-width: 1200px; margin: 0 auto; padding: 24px 20px;
+            display: flex; align-items: center; gap: 20px;
+        }
+        .logo {
+            width: 80px; height: 80px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; flex-shrink: 0;
+        }
+        .header-text h1 { font-size: 28px; font-weight: 700; }
+        .header-text p { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+
+        /* ── Navigation ── */
+        .nav {
+            background: var(--primary-dark); border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto; display: flex;
+            gap: 0; overflow-x: auto;
+        }
+        .nav a {
+            color: white; text-decoration: none; padding: 14px 20px;
+            font-size: 14px; font-weight: 500; white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .nav a:hover, .nav a.active { background: rgba(255,255,255,0.1); }
+
+        /* ── Hero Banner ── */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.5)),
+                        url('https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1200') center/cover;
+            min-height: 320px; display: flex; align-items: center; justify-content: center;
+            text-align: center; color: white; padding: 40px 20px;
+        }
+        .hero h2 { font-size: 36px; font-weight: 700; margin-bottom: 12px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .hero p { font-size: 18px; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+        /* ── Main Layout ── */
+        .main {
+            max-width: 1200px; margin: 0 auto; padding: 32px 20px;
+            display: grid; grid-template-columns: 1fr 360px; gap: 32px;
+        }
+        @media (max-width: 768px) { .main { grid-template-columns: 1fr; } }
+
+        /* ── Cards ── */
+        .section-title {
+            font-size: 20px; font-weight: 700; color: var(--primary);
+            margin-bottom: 16px; padding-bottom: 8px;
+            border-bottom: 3px solid var(--primary-light);
+        }
+        .news-card {
+            background: var(--card); border-radius: 8px; overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 20px;
+            transition: box-shadow 0.2s;
+        }
+        .news-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .news-card img { width: 100%; height: 200px; object-fit: cover; }
+        .news-card .body { padding: 20px; }
+        .news-card .category {
+            display: inline-block; background: var(--primary-light); color: white;
+            font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 3px;
+            text-transform: uppercase; margin-bottom: 8px;
+        }
+        .news-card h3 { font-size: 18px; margin-bottom: 8px; line-height: 1.4; }
+        .news-card .excerpt { font-size: 14px; color: var(--text-light); line-height: 1.6; }
+        .news-card .meta { font-size: 12px; color: var(--text-light); margin-top: 12px; }
+
+        /* ── Sidebar ── */
+        .sidebar-card {
+            background: var(--card); border-radius: 8px; padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 20px;
+        }
+        .sidebar-card h3 {
+            font-size: 16px; font-weight: 700; color: var(--primary);
+            margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border);
+        }
+
+        .profile-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .profile-item:last-child { border-bottom: none; }
+        .profile-item .label { color: var(--text-light); }
+        .profile-item .value { font-weight: 600; }
+
+        .agenda-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .agenda-item:last-child { border-bottom: none; }
+        .agenda-item .date { font-size: 12px; color: var(--accent); font-weight: 600; }
+        .agenda-item .title { font-size: 14px; margin-top: 2px; }
+
+        .contact-item { padding: 6px 0; font-size: 14px; }
+        .contact-item span { color: var(--text-light); }
+
+        .quick-links a {
+            display: block; padding: 8px 0; font-size: 14px;
+            color: var(--primary); text-decoration: none;
+            border-bottom: 1px solid var(--border);
+        }
+        .quick-links a:last-child { border-bottom: none; }
+        .quick-links a:hover { color: var(--accent); }
+
+        /* ── Stats Bar ── */
+        .stats-bar {
+            background: var(--card); border-radius: 8px; padding: 24px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+            text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin-bottom: 32px;
+        }
+        .stats-bar .num { font-size: 28px; font-weight: 700; color: var(--primary); }
+        .stats-bar .label { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        @media (max-width: 768px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+
+        /* ── Footer ── */
+        .footer {
+            background: var(--primary-dark); color: white; padding: 32px 20px;
+            margin-top: 40px; text-align: center; font-size: 14px;
+        }
+        .footer .powered { font-size: 12px; color: #A5D6A7; margin-top: 8px; }
+
+        /* ── Ticker ── */
+        .ticker {
+            background: var(--accent); color: white; padding: 10px 0;
+            overflow: hidden; white-space: nowrap;
+        }
+        .ticker-content {
+            display: inline-block; animation: ticker 30s linear infinite;
+            font-size: 14px; font-weight: 500;
+        }
+        @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="#">📧 desaberatwetan@gmail.com</a>
+        <a href="#">📞 (0355) 123-456</a>
+        <a href="#">📍 Kec. Kalidawir, Kab. Tulungagung, Jawa Timur</a>
+    </div>
+
+    <div class="header">
+        <div class="header-inner">
+            <div class="logo">🏘️</div>
+            <div class="header-text">
+                <h1>Desa Berat Wetan</h1>
+                <p>Kecamatan Kalidawir, Kabupaten Tulungagung, Provinsi Jawa Timur</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-inner">
+            <a href="#" class="active">Beranda</a>
+            <a href="#">Profil Desa</a>
+            <a href="#">Pemerintahan</a>
+            <a href="#">Berita</a>
+            <a href="#">Pembangunan</a>
+            <a href="#">Produk Unggulan</a>
+            <a href="#">Galeri</a>
+            <a href="#">Kontak</a>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div>
+            <h2>Selamat Datang di Desa Berat Wetan</h2>
+            <p>Membangun desa yang maju, mandiri, dan sejahtera melalui gotong royong dan inovasi</p>
+        </div>
+    </div>
+
+    <div class="ticker">
+        <div class="ticker-content">
+            📢 Pengumuman: Pendaftaran BLT Dana Desa Tahap III dibuka hingga 30 Juni 2026 — Musyawarah Desa akan dilaksanakan tanggal 25 Juni 2026 di Balai Desa — Vaksinasi booster tersedia di Posyandu setiap hari Rabu
+        </div>
+    </div>
+
+    <div style="max-width: 1200px; margin: 32px auto 0; padding: 0 20px;">
+        <div class="stats-bar">
+            <div><div class="num">4.832</div><div class="label">Jumlah Penduduk</div></div>
+            <div><div class="num">1.247</div><div class="label">Kepala Keluarga</div></div>
+            <div><div class="num">385</div><div class="label">Hektar Luas Wilayah</div></div>
+            <div><div class="num">5</div><div class="label">Dusun</div></div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="content-area">
+            <h2 class="section-title">Berita & Kegiatan Terbaru</h2>
+
+            <div class="news-card">
+                <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600" alt="Panen Raya">
+                <div class="body">
+                    <span class="category">Berita</span>
+                    <h3>Panen Raya Padi 2026: Hasil Meningkat 15% Berkat Program Irigasi Baru</h3>
+                    <p class="excerpt">Petani Desa Berat Wetan merayakan panen raya musim tanam pertama tahun 2026 dengan hasil yang meningkat signifikan dibandingkan tahun lalu. Peningkatan ini berkat perbaikan saluran irigasi yang diselesaikan akhir tahun 2025.</p>
+                    <div class="meta">📅 15 Juni 2026 · Oleh Admin Desa</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600" alt="Posyandu">
+                <div class="body">
+                    <span class="category">Kesehatan</span>
+                    <h3>Posyandu Melati Raih Penghargaan Posyandu Aktif Tingkat Kabupaten</h3>
+                    <p class="excerpt">Posyandu Melati yang berlokasi di Dusun Krajan berhasil meraih penghargaan sebagai Posyandu Paling Aktif se-Kabupaten Tulungagung. Penghargaan diserahkan langsung oleh Bupati pada acara Hari Kesehatan Nasional.</p>
+                    <div class="meta">📅 10 Juni 2026 · Oleh Admin Desa</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <div class="body">
+                    <span class="category">Pengumuman</span>
+                    <h3>Pendaftaran BLT Dana Desa Tahap III Dibuka</h3>
+                    <p class="excerpt">Pemerintah Desa Berat Wetan membuka pendaftaran penerima Bantuan Langsung Tunai (BLT) Dana Desa Tahap III Tahun 2026. Warga yang memenuhi kriteria dimohon membawa KTP dan KK ke Balai Desa.</p>
+                    <div class="meta">📅 5 Juni 2026 · Oleh Sekretaris Desa</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="https://images.unsplash.com/photo-1594608661623-aa0bd3a69d98?w=600" alt="Gotong Royong">
+                <div class="body">
+                    <span class="category">Kegiatan</span>
+                    <h3>Gotong Royong Bersihkan Sungai dan Saluran Air Desa</h3>
+                    <p class="excerpt">Ratusan warga dari lima dusun turut serta dalam kegiatan gotong royong pembersihan sungai dan saluran air desa menjelang musim penghujan. Kegiatan ini menjadi tradisi tahunan untuk mencegah banjir.</p>
+                    <div class="meta">📅 1 Juni 2026 · Oleh Karang Taruna</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-card">
+                <h3>📋 Profil Desa</h3>
+                <div class="profile-item"><span class="label">Kepala Desa</span><span class="value">H. Suparman, S.Pd</span></div>
+                <div class="profile-item"><span class="label">Kode Desa</span><span class="value">3504102006</span></div>
+                <div class="profile-item"><span class="label">Kode Pos</span><span class="value">66281</span></div>
+                <div class="profile-item"><span class="label">Tipologi</span><span class="value">Persawahan</span></div>
+                <div class="profile-item"><span class="label">Klasifikasi</span><span class="value">Desa Swakarya</span></div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>📅 Agenda Desa</h3>
+                <div class="agenda-item">
+                    <div class="date">25 Juni 2026</div>
+                    <div class="title">Musyawarah Desa (Musdes) Semester I</div>
+                </div>
+                <div class="agenda-item">
+                    <div class="date">1 Juli 2026</div>
+                    <div class="title">Posyandu Balita & Lansia</div>
+                </div>
+                <div class="agenda-item">
+                    <div class="date">5 Juli 2026</div>
+                    <div class="title">Pelatihan UMKM Digital</div>
+                </div>
+                <div class="agenda-item">
+                    <div class="date">17 Agustus 2026</div>
+                    <div class="title">Peringatan HUT RI ke-81</div>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>📞 Kontak Desa</h3>
+                <div class="contact-item">📍 <span>Jl. Raya Berat Wetan No. 1</span></div>
+                <div class="contact-item">📞 <span>(0355) 123-456</span></div>
+                <div class="contact-item">📧 <span>desaberatwetan@gmail.com</span></div>
+                <div class="contact-item">🕐 <span>Senin-Jumat, 08.00-15.00 WIB</span></div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>🔗 Tautan Penting</h3>
+                <div class="quick-links">
+                    <a href="#">Sistem Informasi Desa (SID)</a>
+                    <a href="#">Laporan APBDes 2026</a>
+                    <a href="#">Data Penduduk</a>
+                    <a href="#">Peta Desa</a>
+                    <a href="#">Layanan Surat Online</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>Pemerintah Desa Berat Wetan</strong></p>
+        <p>Kecamatan Kalidawir, Kabupaten Tulungagung, Provinsi Jawa Timur</p>
+        <p class="powered">Powered by DesaDigital — Website Desa Modern, Aman, dan Terupdate Otomatis</p>
+    </div>
+</body>
+</html>
