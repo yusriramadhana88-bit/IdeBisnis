@@ -157,6 +157,59 @@
             font-size: 14px; font-weight: 500;
         }
         @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* ── Calendar Table ── */
+        .calendar-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .calendar-table th { background: var(--primary); color: white; padding: 8px 6px; text-align: left; font-weight: 600; }
+        .calendar-table td { padding: 8px 6px; border-bottom: 1px solid var(--border); }
+        .calendar-table .event { color: var(--primary); font-weight: 500; }
+        .calendar-table .highlight-row { background: #E8F5E9; }
+        .calendar-table .highlight-row td { font-weight: 600; }
+
+        /* ── Chatbot ── */
+        .chatbot-fab {
+            position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px;
+            background: var(--primary); color: white; border: none; border-radius: 50%;
+            font-size: 28px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            z-index: 1000; transition: transform 0.2s;
+        }
+        .chatbot-fab:hover { transform: scale(1.1); }
+        .chatbot-panel {
+            display: none; position: fixed; bottom: 96px; right: 24px;
+            width: 360px; height: 480px; background: white; border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2); z-index: 1000;
+            flex-direction: column; overflow: hidden;
+        }
+        .chatbot-panel.open { display: flex; }
+        .chatbot-header {
+            background: var(--primary); color: white; padding: 14px 16px;
+            font-weight: 600; display: flex; justify-content: space-between; align-items: center;
+        }
+        .chatbot-header .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+        .chatbot-messages {
+            flex: 1; overflow-y: auto; padding: 16px; display: flex;
+            flex-direction: column; gap: 10px;
+        }
+        .chat-msg {
+            max-width: 80%; padding: 10px 14px; border-radius: 12px;
+            font-size: 13px; line-height: 1.5;
+        }
+        .chat-msg.bot { background: #E8F5E9; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .chat-msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-msg.typing { color: #888; font-style: italic; }
+        .chatbot-input {
+            display: flex; border-top: 1px solid var(--border); padding: 12px;
+        }
+        .chatbot-input input {
+            flex: 1; border: 1px solid var(--border); border-radius: 20px;
+            padding: 10px 16px; font-size: 13px; outline: none;
+        }
+        .chatbot-input input:focus { border-color: var(--primary); }
+        .chatbot-input button {
+            margin-left: 8px; background: var(--primary); color: white; border: none;
+            border-radius: 50%; width: 38px; height: 38px; cursor: pointer; font-size: 16px;
+        }
+        @media (max-width: 480px) { .chatbot-panel { width: calc(100vw - 32px); right: 16px; bottom: 88px; } }
     </style>
 </head>
 <body>
@@ -266,23 +319,21 @@
             </div>
 
             <div class="sidebar-card">
-                <h3>📅 Agenda Desa</h3>
-                <div class="agenda-item">
-                    <div class="date">25 Juni 2026</div>
-                    <div class="title">Musyawarah Desa (Musdes) Semester I</div>
-                </div>
-                <div class="agenda-item">
-                    <div class="date">1 Juli 2026</div>
-                    <div class="title">Posyandu Balita & Lansia</div>
-                </div>
-                <div class="agenda-item">
-                    <div class="date">5 Juli 2026</div>
-                    <div class="title">Pelatihan UMKM Digital</div>
-                </div>
-                <div class="agenda-item">
-                    <div class="date">17 Agustus 2026</div>
-                    <div class="title">Peringatan HUT RI ke-81</div>
-                </div>
+                <h3>📅 Agenda Minggu Ini</h3>
+                <table class="calendar-table">
+                    <thead>
+                        <tr><th>Hari</th><th>Tanggal</th><th>Kegiatan</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Sen</td><td>23 Jun</td><td class="event">Senam Pagi Lansia</td></tr>
+                        <tr><td>Sel</td><td>24 Jun</td><td>-</td></tr>
+                        <tr class="highlight-row"><td>Rab</td><td>25 Jun</td><td class="event">Musyawarah Desa</td></tr>
+                        <tr><td>Kam</td><td>26 Jun</td><td class="event">Posyandu Balita</td></tr>
+                        <tr><td>Jum</td><td>27 Jun</td><td class="event">Jumat Bersih</td></tr>
+                        <tr><td>Sab</td><td>28 Jun</td><td>-</td></tr>
+                        <tr><td>Min</td><td>29 Jun</td><td class="event">Kerja Bakti Dusun</td></tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="sidebar-card">
@@ -311,5 +362,70 @@
         <p>Kecamatan Kalidawir, Kabupaten Tulungagung, Provinsi Jawa Timur</p>
         <p class="powered">Powered by DesaDigital — Website Desa Modern, Aman, dan Terupdate Otomatis</p>
     </div>
+
+    <!-- Chatbot AI -->
+    <button class="chatbot-fab" onclick="toggleChat()" title="Tanya AI Desa">💬</button>
+    <div class="chatbot-panel" id="chatPanel">
+        <div class="chatbot-header">
+            <span>🤖 Asisten Desa AI</span>
+            <button class="close-btn" onclick="toggleChat()">&times;</button>
+        </div>
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="chat-msg bot">Halo! Saya asisten virtual Desa Berat Wetan. Silakan tanya tentang layanan desa, jadwal kegiatan, persyaratan surat, atau informasi lainnya.</div>
+        </div>
+        <div class="chatbot-input">
+            <input type="text" id="chatInput" placeholder="Ketik pertanyaan..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button onclick="sendChat()">➤</button>
+        </div>
+    </div>
+
+    <script>
+    function toggleChat() {
+        document.getElementById('chatPanel').classList.toggle('open');
+        document.getElementById('chatInput').focus();
+    }
+
+    const FAQ = {
+        "surat": "Untuk pembuatan surat (SKU, SKTM, pengantar KTP/KK), silakan datang ke Balai Desa dengan membawa KTP dan KK asli. Jam pelayanan: Senin-Jumat, 08.00-15.00 WIB.",
+        "blt": "Pendaftaran BLT Dana Desa Tahap III dibuka hingga 30 Juni 2026. Syarat: KTP, KK, dan termasuk dalam Data Terpadu Kesejahteraan Sosial (DTKS). Hubungi RT/RW setempat.",
+        "posyandu": "Posyandu Balita dilaksanakan setiap Kamis minggu ke-4 di masing-masing dusun. Posyandu Lansia setiap Rabu minggu ke-1.",
+        "musyawarah": "Musyawarah Desa (Musdes) terdekat: 25 Juni 2026, pukul 09.00 WIB di Balai Desa. Terbuka untuk seluruh warga.",
+        "kepala": "Kepala Desa Berat Wetan saat ini adalah H. Suparman, S.Pd. Periode jabatan 2024-2030.",
+        "kontak": "Kantor Desa: Jl. Raya Berat Wetan No. 1. Telp: (0355) 123-456. Email: desaberatwetan@gmail.com.",
+        "umkm": "Pelatihan UMKM Digital akan dilaksanakan 5 Juli 2026. Pendaftaran gratis melalui Karang Taruna atau langsung ke Balai Desa.",
+    };
+
+    function findAnswer(msg) {
+        const lower = msg.toLowerCase();
+        for (const [key, answer] of Object.entries(FAQ)) {
+            if (lower.includes(key)) return answer;
+        }
+        if (lower.includes("jam") || lower.includes("buka")) return FAQ["surat"];
+        if (lower.includes("jadwal") || lower.includes("agenda")) return "Agenda minggu ini: Senin - Senam Lansia, Rabu - Musyawarah Desa, Kamis - Posyandu Balita, Jumat - Jumat Bersih, Minggu - Kerja Bakti. Lihat tabel kalender di sidebar untuk detail.";
+        return "Maaf, saya belum bisa menjawab pertanyaan tersebut. Silakan hubungi kantor desa di (0355) 123-456 atau datang langsung ke Balai Desa pada jam kerja. Anda juga bisa bertanya tentang: surat, BLT, posyandu, musyawarah, UMKM, atau kontak desa.";
+    }
+
+    function sendChat() {
+        const input = document.getElementById('chatInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
+
+        const messages = document.getElementById('chatMessages');
+        messages.innerHTML += `<div class="chat-msg user">${escapeHtml(msg)}</div>`;
+        messages.innerHTML += `<div class="chat-msg bot typing">Mengetik...</div>`;
+        messages.scrollTop = messages.scrollHeight;
+
+        setTimeout(() => {
+            const typing = messages.querySelector('.typing');
+            if (typing) typing.remove();
+            const answer = findAnswer(msg);
+            messages.innerHTML += `<div class="chat-msg bot">${escapeHtml(answer)}</div>`;
+            messages.scrollTop = messages.scrollHeight;
+        }, 800);
+    }
+
+    function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    </script>
 </body>
 </html>
