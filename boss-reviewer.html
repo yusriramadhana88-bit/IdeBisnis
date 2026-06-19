@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boss Reviewer — Review Dokumen Bahasa Indonesia</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f5; color: #333; }
+
+        .header {
+            background: #1a1a2e; color: white; padding: 20px 40px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header h1 { font-size: 24px; font-weight: 700; }
+        .header h1 span { color: #e94560; }
+        .header .tagline { font-size: 13px; color: #aaa; }
+
+        .upload-area {
+            max-width: 640px; margin: 40px auto; background: white;
+            border: 2px dashed #ccc; border-radius: 12px; padding: 36px;
+            text-align: center; cursor: pointer; transition: border-color 0.2s;
+        }
+        .upload-area:hover { border-color: #e94560; }
+        .upload-area.dragover { border-color: #e94560; background: #fff5f7; }
+        .upload-area h2 { margin-bottom: 8px; }
+        .upload-area p { color: #888; font-size: 14px; }
+        .upload-area input[type="file"] { display: none; }
+
+        .btn {
+            display: inline-block; padding: 10px 24px; border: none; border-radius: 6px;
+            font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px;
+        }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-primary:hover { background: #d63851; }
+        .btn-outline { background: white; color: #e94560; border: 2px solid #e94560; }
+
+        /* ── Feature Toggles ── */
+        .feature-toggles {
+            display: flex; gap: 10px; justify-content: center; margin: 20px 0 8px;
+            flex-wrap: wrap;
+        }
+        .feat-toggle {
+            display: flex; align-items: center; gap: 6px; padding: 8px 16px;
+            border: 2px solid #ddd; border-radius: 20px; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: all 0.2s; user-select: none;
+        }
+        .feat-toggle input { display: none; }
+        .feat-toggle.active { border-color: #e94560; background: #fff5f7; color: #e94560; }
+        .feat-toggle .dot {
+            width: 10px; height: 10px; border-radius: 50%; border: 2px solid #ccc;
+        }
+        .feat-toggle.active .dot { background: #e94560; border-color: #e94560; }
+
+        .feat-toggle[data-feat="typo"].active { border-color: #e94560; background: #fff5f7; }
+        .feat-toggle[data-feat="diksi"].active { border-color: #2196F3; background: #E3F2FD; color: #1565C0; }
+        .feat-toggle[data-feat="diksi"].active .dot { background: #2196F3; border-color: #2196F3; }
+        .feat-toggle[data-feat="koherensi"].active { border-color: #9C27B0; background: #F3E5F5; color: #7B1FA2; }
+        .feat-toggle[data-feat="koherensi"].active .dot { background: #9C27B0; border-color: #9C27B0; }
+
+        .tier-toggle { display: flex; gap: 8px; margin-top: 12px; justify-content: center; }
+        .tier-btn {
+            padding: 8px 20px; border-radius: 20px; border: 2px solid #ddd;
+            background: white; cursor: pointer; font-size: 13px; font-weight: 600;
+        }
+        .tier-btn.active { border-color: #e94560; color: #e94560; }
+        .tier-btn.premium { border-color: #ffd700; color: #856404; background: #fffde7; }
+
+        /* ── Loading ── */
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #eee;
+            border-top-color: #e94560; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Result ── */
+        .result-container {
+            display: none; max-width: 1200px; margin: 20px auto;
+            grid-template-columns: 1fr 380px; gap: 20px; padding: 0 20px;
+        }
+        .result-container.active { display: grid; }
+        @media (max-width: 800px) { .result-container.active { grid-template-columns: 1fr; } }
+
+        .document-panel {
+            background: white; border-radius: 8px; padding: 32px 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); line-height: 1.8;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .document-panel p { margin-bottom: 12px; position: relative; }
+
+        .highlight {
+            padding: 1px 2px; border-radius: 2px; cursor: pointer;
+            transition: outline 0.15s;
+        }
+        .highlight:hover { outline: 2px solid currentColor; }
+        .hl-typo { background: #fff3cd; border-bottom: 2px solid #e94560; }
+        .hl-typo.fixed { background: #d4edda; border-bottom-color: #28a745; }
+        .hl-diksi { background: #E3F2FD; border-bottom: 2px solid #2196F3; }
+        .hl-diksi.fixed { background: #C8E6C9; border-bottom-color: #28a745; }
+        .hl-koherensi { background: #F3E5F5; border-bottom: 2px solid #9C27B0; }
+
+        /* ── Comments Panel ── */
+        .comments-panel { max-height: 80vh; overflow-y: auto; }
+        .comments-panel h3 {
+            font-size: 14px; color: #666; margin-bottom: 12px;
+            padding-bottom: 8px; border-bottom: 1px solid #eee;
+        }
+        .filter-bar {
+            display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 4px 12px; border-radius: 12px; border: 1px solid #ddd;
+            background: white; cursor: pointer; font-size: 12px; font-weight: 500;
+        }
+        .filter-btn.active { font-weight: 700; }
+        .filter-btn[data-filter="typo"].active { border-color: #e94560; color: #e94560; background: #fff5f7; }
+        .filter-btn[data-filter="diksi"].active { border-color: #2196F3; color: #1565C0; background: #E3F2FD; }
+        .filter-btn[data-filter="koherensi"].active { border-color: #9C27B0; color: #7B1FA2; background: #F3E5F5; }
+        .filter-btn[data-filter="all"].active { border-color: #333; color: #333; }
+
+        .comment-card {
+            background: white; border-radius: 8px; padding: 14px 16px;
+            margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 3px solid #ccc; font-size: 13px; cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        .comment-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .comment-card.type-typo { border-left-color: #e94560; }
+        .comment-card.type-diksi { border-left-color: #2196F3; }
+        .comment-card.type-koherensi { border-left-color: #9C27B0; }
+        .comment-card.fixed { border-left-color: #28a745; }
+
+        .comment-card .typo-word { color: #e94560; font-weight: 600; }
+        .comment-card .suggestion { color: #28a745; font-weight: 600; }
+        .comment-card .context { color: #888; font-size: 12px; margin-top: 4px; }
+        .comment-card .note { color: #2196F3; font-size: 12px; margin-top: 4px; font-style: italic; }
+
+        .badge {
+            display: inline-block; font-size: 10px; padding: 2px 6px;
+            border-radius: 3px; font-weight: 600; margin-bottom: 4px;
+        }
+        .badge-typo { background: #fff3cd; color: #856404; }
+        .badge-diksi { background: #E3F2FD; color: #1565C0; }
+        .badge-koherensi { background: #F3E5F5; color: #7B1FA2; }
+        .badge-fixed { background: #d4edda; color: #155724; }
+
+        .upsell-card {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white; border-radius: 8px; padding: 20px;
+            margin-top: 12px; text-align: center;
+        }
+        .upsell-card h4 { margin-bottom: 8px; }
+        .upsell-card p { font-size: 13px; color: #ccc; margin-bottom: 12px; }
+
+        .stats-bar {
+            display: none; max-width: 1200px; margin: 20px auto 0;
+            padding: 16px 40px; background: white; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stats-bar.active { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+        .stat { text-align: center; }
+        .stat .num { font-size: 28px; font-weight: 700; color: #e94560; }
+        .stat .label { font-size: 12px; color: #888; }
+
+        .new-review-btn { display: none; text-align: center; margin: 20px auto; }
+        .new-review-btn.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Boss <span>Reviewer</span></h1>
+            <div class="tagline">Review dokumen Bahasa Indonesia — typo, diksi, koherensi</div>
+        </div>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+        <h2>Upload Dokumen</h2>
+        <p>Drag & drop file .docx di sini, atau klik untuk pilih file</p>
+        <input type="file" id="fileInput" accept=".docx,.pdf">
+
+        <div class="feature-toggles">
+            <label class="feat-toggle active" data-feat="typo" onclick="toggleFeat(this)">
+                <span class="dot"></span> Typo Checker
+            </label>
+            <label class="feat-toggle" data-feat="diksi" onclick="toggleFeat(this)">
+                <span class="dot"></span> Konsistensi Diksi
+            </label>
+            <label class="feat-toggle" data-feat="koherensi" onclick="toggleFeat(this)">
+                <span class="dot"></span> Koherensi Paragraf
+            </label>
+        </div>
+
+        <div class="tier-toggle">
+            <button class="tier-btn active" data-tier="free" onclick="setTier('free')">Gratis (5 temuan)</button>
+            <button class="tier-btn premium" data-tier="premium" onclick="setTier('premium')">Premium ★</button>
+        </div>
+        <br>
+        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Pilih File</button>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p id="loadingText">Sedang mereview dokumen...</p>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="label">Total Temuan</div></div>
+        <div class="stat"><div class="num" id="statShown">0</div><div class="label">Ditampilkan</div></div>
+        <div class="stat"><div class="num" id="statParas">0</div><div class="label">Paragraf</div></div>
+        <div class="stat" id="statTypoWrap" style="display:none"><div class="num" id="statTypo" style="color:#e94560">0</div><div class="label">Typo</div></div>
+        <div class="stat" id="statDiksiWrap" style="display:none"><div class="num" id="statDiksi" style="color:#2196F3">0</div><div class="label">Diksi</div></div>
+        <div class="stat" id="statKoherensiWrap" style="display:none"><div class="num" id="statKoherensi" style="color:#9C27B0">0</div><div class="label">Koherensi</div></div>
+    </div>
+
+    <div class="result-container" id="resultContainer">
+        <div class="document-panel" id="documentPanel"></div>
+        <div class="comments-panel" id="commentsPanel">
+            <h3>💬 Comments</h3>
+        </div>
+    </div>
+
+    <div class="new-review-btn" id="newReviewBtn">
+        <button class="btn btn-outline" onclick="resetReview()">Review Dokumen Lain</button>
+    </div>
+
+<script>
+let currentTier = 'free';
+let activeFeatures = { typo: true, diksi: false, koherensi: false };
+
+function toggleFeat(el) {
+    const feat = el.dataset.feat;
+    el.classList.toggle('active');
+    activeFeatures[feat] = el.classList.contains('active');
+}
+
+function setTier(tier) {
+    currentTier = tier;
+    document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-tier="${tier}"]`).classList.add('active');
+    const fileInput = document.getElementById('fileInput');
+    fileInput.accept = tier === 'premium' ? '.docx,.pdf' : '.docx';
+}
+
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+    e.preventDefault(); uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+function handleFile(file) {
+    const enabledFeats = Object.entries(activeFeatures).filter(([,v]) => v).map(([k]) => k);
+    if (enabledFeats.length === 0) { alert('Pilih minimal satu fitur review.'); return; }
+
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('premium', currentTier === 'premium' ? '1' : '0');
+    for (const f of enabledFeats) formData.append(`feat_${f}`, '1');
+
+    uploadArea.style.display = 'none';
+    const loading = document.getElementById('loading');
+    loading.classList.add('active');
+    document.getElementById('loadingText').textContent =
+        `Sedang mereview dokumen (${enabledFeats.join(', ')})...`;
+
+    fetch('/upload', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            loading.classList.remove('active');
+            if (data.error) { alert(data.error); resetReview(); return; }
+            renderResult(data);
+        })
+        .catch(() => { alert('Gagal memproses dokumen'); resetReview(); });
+}
+
+const TYPE_COLORS = { typo: '#e94560', diksi: '#2196F3', koherensi: '#9C27B0' };
+const TYPE_LABELS = { typo: 'Typo', diksi: 'Inkonsistensi Diksi', koherensi: 'Koherensi Paragraf' };
+
+function renderResult(data) {
+    const docPanel = document.getElementById('documentPanel');
+    const commPanel = document.getElementById('commentsPanel');
+    const isPremium = data.is_premium;
+    const findings = data.findings;
+
+    // Build paragraph HTML with highlights
+    let html = '';
+    for (const para of data.paragraphs) {
+        let text = escapeHtml(para.text);
+        const paraFindings = findings.filter(f => f.paragraph === para.index);
+        for (const f of paraFindings) {
+            const word = escapeHtml(f.word);
+            const type = f.type || 'typo';
+            let cls = `highlight hl-${type}`;
+            let display = word;
+            if (isPremium && type !== 'koherensi') {
+                cls += ' fixed';
+                display = escapeHtml(f.suggestion);
+            }
+            const id = `${f.paragraph}-${type}-${f.word}`;
+            const escaped = escapeRegex(f.word);
+            const regex = new RegExp(`(${escaped})`, 'i');
+            text = text.replace(regex, `<span class="${cls}" data-id="${id}">${display}</span>`);
+        }
+        html += `<p>${text}</p>`;
+    }
+    docPanel.innerHTML = html;
+
+    // Build filter bar + comments
+    const types = [...new Set(findings.map(f => f.type || 'typo'))];
+    let commHtml = '<h3>💬 Comments</h3>';
+    if (types.length > 1) {
+        commHtml += '<div class="filter-bar">';
+        commHtml += '<button class="filter-btn active" data-filter="all" onclick="filterComments(\'all\', this)">Semua</button>';
+        for (const t of types) {
+            commHtml += `<button class="filter-btn" data-filter="${t}" onclick="filterComments('${t}', this)">${TYPE_LABELS[t]}</button>`;
+        }
+        commHtml += '</div>';
+    }
+
+    for (const f of findings) {
+        const type = f.type || 'typo';
+        const id = `${f.paragraph}-${type}-${f.word}`;
+        let cardClass = `comment-card type-${type}`;
+        if (isPremium && type !== 'koherensi') cardClass += ' fixed';
+
+        commHtml += `<div class="${cardClass}" data-id="${id}" data-type="${type}">`;
+
+        if (isPremium && type !== 'koherensi') {
+            commHtml += `<span class="badge badge-fixed">✅ Diperbaiki</span> `;
+            commHtml += `<span class="badge badge-${type}">${TYPE_LABELS[type]}</span><br>`;
+            commHtml += `"<span class="suggestion">${escapeHtml(f.suggestion)}</span>"`;
+            commHtml += ` ← sebelumnya "<span class="typo-word">${escapeHtml(f.word)}</span>"`;
+        } else {
+            commHtml += `<span class="badge badge-${type}">${TYPE_LABELS[type]}</span><br>`;
+            if (type === 'koherensi') {
+                commHtml += `<span class="typo-word">${escapeHtml(f.word)}</span><br>`;
+                commHtml += `<span class="suggestion">${escapeHtml(f.suggestion)}</span>`;
+            } else {
+                commHtml += `"<span class="typo-word">${escapeHtml(f.word)}</span>"`;
+                commHtml += ` → seharusnya "<span class="suggestion">${escapeHtml(f.suggestion)}</span>"`;
+            }
+        }
+
+        if (f.context) commHtml += `<div class="context">${escapeHtml(f.context)}</div>`;
+        if (f.note) commHtml += `<div class="note">${escapeHtml(f.note)}</div>`;
+        commHtml += '</div>';
+    }
+
+    if (data.is_limited) {
+        const hidden = data.total_found - findings.length;
+        commHtml += `
+            <div class="upsell-card">
+                <h4>🔒 ${hidden} temuan lainnya tersembunyi</h4>
+                <p>Upgrade ke Premium untuk melihat semua temuan + auto-fix + upload PDF</p>
+                <button class="btn btn-primary" onclick="alert('Coming soon!')">Upgrade Premium</button>
+            </div>`;
+    }
+
+    commPanel.innerHTML = commHtml;
+
+    // Hover sync
+    document.querySelectorAll('.comment-card[data-id]').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            const id = card.dataset.id;
+            const hl = document.querySelector(`.highlight[data-id="${id}"]`);
+            if (hl) { hl.scrollIntoView({ behavior: 'smooth', block: 'center' }); hl.style.outline = '2px solid ' + (TYPE_COLORS[card.dataset.type] || '#e94560'); }
+        });
+        card.addEventListener('mouseleave', () => {
+            document.querySelectorAll('.highlight').forEach(h => h.style.removeProperty('outline'));
+        });
+    });
+
+    // Stats
+    document.getElementById('statTotal').textContent = data.total_found;
+    document.getElementById('statShown').textContent = findings.length;
+    document.getElementById('statParas').textContent = data.paragraphs.length;
+
+    const countByType = {};
+    for (const f of findings) { const t = f.type || 'typo'; countByType[t] = (countByType[t] || 0) + 1; }
+    for (const t of ['typo', 'diksi', 'koherensi']) {
+        const wrap = document.getElementById(`stat${t.charAt(0).toUpperCase()+t.slice(1)}Wrap`);
+        const num = document.getElementById(`stat${t.charAt(0).toUpperCase()+t.slice(1)}`);
+        if (countByType[t]) { wrap.style.display = ''; num.textContent = countByType[t]; }
+    }
+
+    document.getElementById('statsBar').classList.add('active');
+    document.getElementById('resultContainer').classList.add('active');
+    document.getElementById('newReviewBtn').classList.add('active');
+}
+
+function filterComments(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.comment-card[data-type]').forEach(card => {
+        card.style.display = (type === 'all' || card.dataset.type === type) ? '' : 'none';
+    });
+}
+
+function resetReview() {
+    uploadArea.style.display = '';
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('statsBar').classList.remove('active');
+    document.getElementById('resultContainer').classList.remove('active');
+    document.getElementById('newReviewBtn').classList.remove('active');
+    ['Typo','Diksi','Koherensi'].forEach(t => { document.getElementById(`stat${t}Wrap`).style.display = 'none'; });
+    fileInput.value = '';
+}
+
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+</script>
+</body>
+</html>
